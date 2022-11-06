@@ -15,8 +15,12 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.ConsumeParams;
+import com.android.billingclient.api.ConsumeResponseListener;
 import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.QueryPurchasesParams;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.android.billingclient.api.SkuDetailsResponseListener;
@@ -144,40 +148,26 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      * Call this function to update app with user's purchases
      */
     private void restorePurchases() {
-        updateBillingUI(cache.getRemoveAdsData());
-    }
+        //Query your database for tickets this user bought already
 
-    /**
-     * Update system to current purchases. You can change this function to support other app
-     *
-     * @param ticketData    System data to record previous remove_ads purchase.
-     */
-    private void updateBillingUI(TicketData ticketData) {
-        if (ticketData != null) {
-            //Ads OFF
-            binding.removeAds.setEnabled(false);
-            binding.removeAds.setText(getString(R.string.status_no_ads));
-        } else {
-            //Ads ON
-            binding.removeAds.setEnabled(true);
-            binding.removeAds.setText(getString(R.string.status_ads));
-        }
     }
 
 
     /**
-     * Save SKUs and purchase tokens to your system data.In this case SharedPreference
+     * Save product_id and purchase tokens to your system data.
      */
     private void recordPurchase(String userID, Purchase purchase) {
         if (purchase.getSkus().get(0).equals(TICKET_PRODUCT_ID)) {
-            //Remove Ads
-            TicketData removeAdsData = new TicketData();
-            removeAdsData.setPurchaseToken(purchase.getPurchaseToken());
-            removeAdsData.setUserID(purchase.getSkus().get(0));
-            removeAdsData.setSku(userID);
-            cache.setRemoveAdsData(removeAdsData);
+            //Join event
+            TicketData ti = new TicketData();
+            ti.setPurchaseToken(purchase.getPurchaseToken());
+            ti.setSku(purchase.getSkus().get(0));
+            ti.setUserID(userID);
+            ti.setEventID("id_of_the_event in_database");
+            //Store this Data in your database so your app cn load information
+
             restorePurchases();
-            Log.d(TAG, "Ads (Remove): Saved");
+            Log.d(TAG, "Event purchase complete");
 
         }
     }
@@ -188,13 +178,28 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      * This will query playstore app cache without making a network request
      */
     private void queryPurchases() {
-//        if (billingClient.isReady()) {
-//            Purchase.PurchasesResult adsPurchaseResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
-//            if ((adsPurchaseResult.getPurchasesList() != null) && adsPurchaseResult.getPurchasesList().size() > 0) {
-//                Purchase adsPurchase = adsPurchaseResult.getPurchasesList().get(0);
-//                handlePurchase(adsPurchase);
-//            }
-//        }
+        if (billingClient.isReady()) {
+
+            billingClient.queryPurchasesAsync(
+                    QueryPurchasesParams.newBuilder()
+                            .setProductType(BillingClient.ProductType.SUBS)
+                            .build(),
+                    new PurchasesResponseListener() {
+                        public void onQueryPurchasesResponse(BillingResult billingResult, List<Purchase> purchases) {
+                            // check billingResult
+                            // process returned purchase list, e.g. display the plans user owns
+                            handlePurchases(purchases);
+
+                        }
+                    }
+            );
+        }
+    }
+
+    void handlePurchases(List<Purchase> purchases) {
+        for (Purchase p : purchases) {
+            handlePurchase(p);
+        }
     }
 
     /**
@@ -205,14 +210,32 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     private void handlePurchase(Purchase purchase) {
         if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
             //Save transaction on system
-            recordPurchase(USER_ID, purchase);
             if (!purchase.isAcknowledged()) {
-                //Acknowledge purchase to prevent refund to buyer
+                recordPurchase(USER_ID, purchase);
+
+                //A: Acknowledge purchase to prevent refund to buyer
                 AcknowledgePurchaseParams acknowledgePurchaseParams =
                         AcknowledgePurchaseParams.newBuilder()
                                 .setPurchaseToken(purchase.getPurchaseToken())
                                 .build();
                 billingClient.acknowledgePurchase(acknowledgePurchaseParams, this);
+
+
+                //B: Consume purchase so that user can buy again for another event
+                ConsumeParams consumeParams =
+                        ConsumeParams.newBuilder()
+                                .setPurchaseToken(purchase.getPurchaseToken())
+                                .build();
+
+                ConsumeResponseListener listener = new ConsumeResponseListener() {
+                    @Override
+                    public void onConsumeResponse(BillingResult billingResult, String purchaseToken) {
+                        if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                            // Handle the success of the consume operation.
+                        }
+                    }
+                };
+                billingClient.consumeAsync(consumeParams, listener);
             }
         }
     }
@@ -227,9 +250,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     public void onPurchasesUpdated(BillingResult billingResult, List<Purchase> purchases) {
         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
                 && purchases != null) {
-            for (Purchase purchase : purchases) {
-                handlePurchase(purchase);
-            }
+            handlePurchases(purchases);
         } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
             // Handle an error caused by a user cancelling the purchase flow.
         } else {

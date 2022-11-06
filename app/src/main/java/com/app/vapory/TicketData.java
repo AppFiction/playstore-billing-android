@@ -3,6 +3,7 @@ package com.app.vapory;
 public class TicketData {
 
     private String userID;
+    private String eventID;
     private String purchaseToken;
     private String sku;
 
@@ -28,5 +29,13 @@ public class TicketData {
 
     public void setSku(String sku) {
         this.sku = sku;
+    }
+
+    public String getEventID() {
+        return eventID;
+    }
+
+    public void setEventID(String eventID) {
+        this.eventID = eventID;
     }
 }

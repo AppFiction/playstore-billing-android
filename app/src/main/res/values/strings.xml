@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">Billing Demo</string>
-    <string name="status_no_ads">Ads OFF</string>
-    <string name="status_ads">Remove Ads</string>
     <string name="status_subs_active">Subscription: Active</string>
     <string name="label_subscribe">Subscribe</string>
     <string name="label_restore_purchases">Restore purchases</string>
