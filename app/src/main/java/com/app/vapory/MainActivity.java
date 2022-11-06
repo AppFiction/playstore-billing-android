@@ -205,16 +205,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
             //Save transaction on system
             if (!purchase.isAcknowledged()) {
                 recordPurchase(USER_ID, purchase);
-
-                //A: Acknowledge purchase to prevent refund to buyer
-                AcknowledgePurchaseParams acknowledgePurchaseParams =
-                        AcknowledgePurchaseParams.newBuilder()
-                                .setPurchaseToken(purchase.getPurchaseToken())
-                                .build();
-                billingClient.acknowledgePurchase(acknowledgePurchaseParams, this);
-
-
-                //B: Consume purchase so that user can buy again for another event
+                //Consume purchase so that user can buy again for another event
                 ConsumeParams consumeParams =
                         ConsumeParams.newBuilder()
                                 .setPurchaseToken(purchase.getPurchaseToken())
