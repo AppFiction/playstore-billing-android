@@ -1,6 +1,9 @@
 package com.app.vapory;
 
-public class TicketData {
+/**
+ * A class than encapsulated data about ticket that was purchaed concerning and event/ raffle
+ */
+public class TicketPurchaseData {
 
     private String userID;
     private String eventID;

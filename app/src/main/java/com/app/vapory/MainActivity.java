@@ -40,12 +40,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     private BillingClient billingClient;
 
     /**
-     * SharedPreference cache
-     */
-    private Cache cache;
-
-
-    /**
      * ID of user who is logged into the app/. For demo purpose we make user constant. Change to your login.
      */
     private String USER_ID = "id_of_the_user_123";
@@ -63,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         //Initialise SharedPreference data storage
-        cache = new Cache(MainActivity.this);
 
         //Connect to Google Play billing at start of activity
         billingClient = BillingClient.newBuilder(this)
@@ -154,12 +147,12 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
 
     /**
-     * Save product_id and purchase tokens to your system data.
+     * Save product_id and purchase tokens to your database.
      */
     private void recordPurchase(String userID, Purchase purchase) {
         if (purchase.getSkus().get(0).equals(TICKET_PRODUCT_ID)) {
             //Join event
-            TicketData ti = new TicketData();
+            TicketPurchaseData ti = new TicketPurchaseData();
             ti.setPurchaseToken(purchase.getPurchaseToken());
             ti.setSku(purchase.getSkus().get(0));
             ti.setUserID(userID);
