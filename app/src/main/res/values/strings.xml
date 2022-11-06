@@ -6,5 +6,5 @@
     <string name="label_subscribe">Subscribe</string>
     <string name="label_restore_purchases">Restore purchases</string>
     <string name="label_cancel_subscription">Cancel subscription</string>
-    <string name="label_remove_ads">Remove Ads</string>
+    <string name="join_event">Join Event</string>
 </resources>

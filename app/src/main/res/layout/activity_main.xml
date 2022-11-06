@@ -15,43 +15,24 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:gravity="center_horizontal"
+                android:layout_marginTop="40dp"
                 android:orientation="vertical">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/removeAds"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="8dp"
                     android:layout_marginEnd="16dp"
-                    android:text="@string/label_remove_ads"
+                    android:text="@string/join_event"
                     android:enabled="true" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/subscribe"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:enabled="true"
-                    android:text="@string/label_subscribe" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/cancelSubscribe"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:text="@string/label_cancel_subscription" />
-
-                <com.google.android.material.button.MaterialButton
                     android:id="@+id/restorePurchases"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
