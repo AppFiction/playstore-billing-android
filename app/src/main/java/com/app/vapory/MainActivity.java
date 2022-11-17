@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
             billingClient.queryPurchasesAsync(
                     QueryPurchasesParams.newBuilder()
-                            .setProductType(BillingClient.ProductType.SUBS)
+                            .setProductType(BillingClient.ProductType.INAPP)
                             .build(),
                     new PurchasesResponseListener() {
                         public void onQueryPurchasesResponse(BillingResult billingResult, List<Purchase> purchases) {
@@ -196,7 +196,8 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     }
 
     /**
-     * Handle purchase
+     * Receives a new purchase and consume so that user can buy it again.
+     * Without consume user will not be able to buy again for another event.
      *
      * @param purchase
      */
