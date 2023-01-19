@@ -1,4 +1,4 @@
-package co.il.codeline.trip2go;
+package demo.appfiction.playbilling;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,7 +18,9 @@ import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.QueryPurchasesParams;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.android.billingclient.api.SkuDetailsResponseListener;
@@ -26,7 +28,8 @@ import com.android.billingclient.api.SkuDetailsResponseListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import co.il.codeline.trip2go.databinding.ActivityMainBinding;
+import demo.appfiction.playbilling.databinding.ActivityMainBinding;
+
 
 /**
  * Demonstrate one-time purchase to remove Ads and monthly subscription for app
@@ -233,20 +236,20 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      * Save SKUs and purchase tokens to your system data.In this case SharedPreference
      */
     private void recordPurchase(String userID, Purchase purchase) {
-        if (purchase.getSku().equals(PRODUCT_REMOVE_ADS)) {
+        if (purchase.getProducts().get(0).equals(PRODUCT_REMOVE_ADS)) {
             //Remove Ads
             RemoveAdsData removeAdsData = new RemoveAdsData();
             removeAdsData.setPurchaseToken(purchase.getPurchaseToken());
-            removeAdsData.setUserID(purchase.getSku());
-            removeAdsData.setSku(userID);
+            removeAdsData.setUserID(purchase.getProducts().get(0));
+            removeAdsData.setProductID(userID);
             cache.setRemoveAdsData(removeAdsData);
             restorePurchases();
             Log.d(TAG, "Ads (Remove): Saved");
 
-        } else if (purchase.getSku().equals(PRODUCT_MONTH)) {
+        } else if (purchase.getProducts().get(0).equals(PRODUCT_MONTH)) {
             //Monthly subscription
             SubscriptionData subscriptionData = new SubscriptionData();
-            subscriptionData.setSku(purchase.getSku());
+            subscriptionData.setSku(purchase.getProducts().get(0));
             subscriptionData.setUserID(USER_ID);
             cache.setSubscriptionData(subscriptionData);
             restorePurchases();
@@ -262,21 +265,29 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      */
     private void queryPurchases() {
         if (billingClient.isReady()) {
-            Purchase.PurchasesResult adsPurchaseResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
-            if ((adsPurchaseResult.getPurchasesList() != null) && adsPurchaseResult.getPurchasesList().size() > 0) {
-                Purchase adsPurchase = adsPurchaseResult.getPurchasesList().get(0);
-                handlePurchase(adsPurchase);
-            }
+            billingClient.queryPurchasesAsync(
+                    QueryPurchasesParams.newBuilder()
+                            .setProductType(BillingClient.ProductType.INAPP)
+                            .build(),
+                    (billingResult, purchases) -> {
+                        // check billingResult
+                        // process returned purchase list, e.g. display the plans user owns
+                        for (Purchase p : purchases) {
+                            handlePurchase(p);
+                        }
+                    }
+            );
 
-            Purchase.PurchasesResult monthPurchaseResult = billingClient.queryPurchases(BillingClient.SkuType.SUBS);
-            if ((monthPurchaseResult.getPurchasesList() != null) && monthPurchaseResult.getPurchasesList().size() > 0) {
-                Purchase monthPurchase = monthPurchaseResult.getPurchasesList().get(0);
-                handlePurchase(monthPurchase);
-            } else {
-                //No current subscription
-                //Update system data accordingly
-                cache.setSubscriptionData(null);
-            }
+
+//            Purchase.PurchasesResult monthPurchaseResult = billingClient.queryPurchases(BillingClient.SkuType.SUBS);
+//            if ((monthPurchaseResult.getPurchasesList() != null) && monthPurchaseResult.getPurchasesList().size() > 0) {
+//                Purchase monthPurchase = monthPurchaseResult.getPurchasesList().get(0);
+//                handlePurchase(monthPurchase);
+//            } else {
+//                //No current subscription
+//                //Update system data accordingly
+//                cache.setSubscriptionData(null);
+//            }
         }
     }
 

@@ -1,10 +1,10 @@
-package co.il.codeline.trip2go;
+package demo.appfiction.playbilling;
 
 public class RemoveAdsData {
 
     private String userID;
     private String purchaseToken;
-    private String sku;
+    private String productID;
 
     public String getUserID() {
         return userID;
@@ -22,11 +22,11 @@ public class RemoveAdsData {
         this.purchaseToken = purchaseToken;
     }
 
-    public String getSku() {
-        return sku;
+    public String getProductID() {
+        return productID;
     }
 
-    public void setSku(String sku) {
-        this.sku = sku;
+    public void setProductID(String productID) {
+        this.productID = productID;
     }
 }

@@ -1,4 +1,4 @@
-package co.il.codeline.trip2go;
+package demo.appfiction.playbilling;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -7,8 +7,6 @@ import com.google.gson.Gson;
 
 /**
  * A class to implement shared preference
- *
- * Created by emmanuel.tagoe on 18/06/2016. Updated 2021
  */
 public class Cache {
 

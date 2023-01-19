@@ -1,4 +1,4 @@
-package co.il.codeline.trip2go;
+package demo.appfiction.playbilling;
 
 import java.util.Date;
 
