@@ -1,6 +1,6 @@
 package demo.appfiction.playbilling;
 
-public class RemoveAdsData {
+public class NonConsumableData {
 
     private String userID;
     private String purchaseToken;

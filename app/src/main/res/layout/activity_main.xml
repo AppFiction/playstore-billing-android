@@ -18,7 +18,7 @@
                 android:orientation="vertical">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/removeAds"
+                    android:id="@+id/non_consumable"
                     style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -26,27 +26,17 @@
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="8dp"
                     android:layout_marginEnd="16dp"
-                    android:text="@string/label_remove_ads"
+                    android:text="@string/label_btn_1"
                     android:enabled="true" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/subscribe"
+                    android:id="@+id/consumable"
                     style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    android:enabled="true"
-                    android:text="@string/label_subscribe" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/cancelSubscribe"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:text="@string/label_cancel_subscription" />
+                    android:text="@string/label_btn2" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/restorePurchases"

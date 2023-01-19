@@ -1,8 +1,6 @@
 package demo.appfiction.playbilling;
 
-import java.util.Date;
-
-public class SubscriptionData {
+public class ConsumableData {
 
     private String userID;
     private String purchaseToken;

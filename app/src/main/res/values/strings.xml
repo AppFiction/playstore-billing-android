@@ -5,6 +5,6 @@
     <string name="status_subs_active">Subscription: Active</string>
     <string name="label_subscribe">Subscribe</string>
     <string name="label_restore_purchases">Restore purchases</string>
-    <string name="label_cancel_subscription">Cancel subscription</string>
-    <string name="label_remove_ads">Remove Ads</string>
+    <string name="label_btn2">Buy consumable</string>
+    <string name="label_btn_1">Buy non-consumable</string>
 </resources>

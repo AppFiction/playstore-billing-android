@@ -28,28 +28,28 @@ public class Cache {
 
     /**
      * System data for user's remove_ads purchase.
-     * @param removeAdsData
+     * @param nonConsumableData
      */
-    public void setRemoveAdsData(RemoveAdsData removeAdsData) {
-        prefs.edit().putString(KEY_REMOVE_ADS_DATA, gson.toJson(removeAdsData)).apply();
+    public void setNonConsumableData(NonConsumableData nonConsumableData) {
+        prefs.edit().putString(KEY_REMOVE_ADS_DATA, gson.toJson(nonConsumableData)).apply();
     }
 
     /**
      * System data for user's subscription.
      * @return
      */
-    public RemoveAdsData getRemoveAdsData() {
+    public NonConsumableData getRemoveAdsData() {
         String json = prefs.getString(KEY_REMOVE_ADS_DATA, null);
-        return gson.fromJson(json, RemoveAdsData.class);
+        return gson.fromJson(json, NonConsumableData.class);
     }
 
-    public void setSubscriptionData(SubscriptionData subscriptionData) {
-        prefs.edit().putString(KEY_SUBS_DATA, gson.toJson(subscriptionData)).apply();
+    public void setConsumableData(ConsumableData consumableData) {
+        prefs.edit().putString(KEY_SUBS_DATA, gson.toJson(consumableData)).apply();
     }
 
-    public SubscriptionData getSubscriptionData() {
+    public ConsumableData getSubscriptionData() {
         String json = prefs.getString(KEY_SUBS_DATA, null);
-        return gson.fromJson(json, SubscriptionData.class);
+        return gson.fromJson(json, ConsumableData.class);
     }
 
 }

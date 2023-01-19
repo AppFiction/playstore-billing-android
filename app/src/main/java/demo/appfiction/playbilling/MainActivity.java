@@ -4,8 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -17,15 +15,13 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryPurchasesParams;
-import com.android.billingclient.api.SkuDetails;
-import com.android.billingclient.api.SkuDetailsParams;
-import com.android.billingclient.api.SkuDetailsResponseListener;
+import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import demo.appfiction.playbilling.databinding.ActivityMainBinding;
@@ -52,21 +48,15 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      */
     private String USER_ID = "id_of_the_user_123";
 
-    public static final String PLAY_STORE_SUBSCRIPTION_URL
-            = "https://play.google.com/store/account/subscriptions";
-
     public static final String PLAY_STORE_SUBSCRIPTION_DEEPLINK_URL
             = "https://play.google.com/store/account/subscriptions?sku=%s&package=%s";
 
     /**
      * ID of one-time in-app product
      */
-    private final String PRODUCT_REMOVE_ADS = "remove_ads";
+    private final String PRODUCT_1 = "prod1";
+    private final String PRODUCT_2 = "prod2";
 
-    /**
-     * ID of subscription product
-     */
-    private final String PRODUCT_MONTH = "standard_sub";
 
     private final String TAG = MainActivity.class.getSimpleName();
 
@@ -105,37 +95,16 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         });
 
         //Button Clicks Listeners
-        binding.removeAds.setOnClickListener(new View.OnClickListener() {
+        binding.nonConsumable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                buyProduct(PRODUCT_REMOVE_ADS);
+                buyProduct(PRODUCT_1);
             }
         });
 
-        binding.subscribe.setOnClickListener(new View.OnClickListener() {
+        binding.consumable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                buyProduct(PRODUCT_MONTH);
-            }
-        });
-
-        binding.cancelSubscribe.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //Will query subs purchase and store info
-                if (cache.getSubscriptionData() != null) {
-                    cancelSubscription(cache.getSubscriptionData().getSku());
-                } else {
-                    cancelSubscription(null);
-                }
-            }
-        });
-
-        binding.restorePurchases.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                restorePurchases();
-                Toast.makeText(MainActivity.this, "Restored", Toast.LENGTH_LONG).show();
 
             }
         });
@@ -149,51 +118,35 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     }
 
     /**
-     * Query in-app details from playstore using sku/product_id
-     * and launch billing flow to buy product
+     * Query in-app details from playstore using product_id. You will then use the received details about the product
+     * to launch billing flow to buy product
      *
-     * @param productID sku of product
+     * @param productID id of product
      */
     private void buyProduct(String productID) {
-        List<String> skuList = new ArrayList<>();
-        skuList.add(productID);
-        SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
-        params.setSkusList(skuList).setType(productID.equals(PRODUCT_MONTH) ? BillingClient.SkuType.SUBS : BillingClient.SkuType.INAPP);
-        billingClient.querySkuDetailsAsync(params.build(),
-                new SkuDetailsResponseListener() {
-                    @Override
-                    public void onSkuDetailsResponse(BillingResult billingResult,
-                                                     List<SkuDetails> skuDetailsList) {
-                        if (skuDetailsList == null) {
-                            Toast.makeText(MainActivity.this, "Account unable to access products. Check if your gmail account is a license tester on Google Play Console", Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        // Process the result.
-                        SkuDetails selectedSkuDetail = selectRemoveAdsProduct(skuDetailsList);
-                        launchBillingFlow(selectedSkuDetail);
-                    }
-                });
-    }
 
-    /**
-     * Manage subscription and cancellation
-     *
-     * @param sku product id of the subscription
-     */
-    private void cancelSubscription(String sku) {
-        Log.i(TAG, "Viewing subscriptions on the Google Play Store");
-        String url;
-        if (sku == null) {
-            // If the SKU is not specified, just open the Google Play subscriptions URL.
-            url = PLAY_STORE_SUBSCRIPTION_URL;
-        } else {
-            // If the SKU is specified, open the deeplink for this SKU on Google Play.
-            url = String.format(PLAY_STORE_SUBSCRIPTION_DEEPLINK_URL,
-                    sku, getApplicationContext().getPackageName());
-        }
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse(url));
-        startActivity(intent);
+        QueryProductDetailsParams queryProductDetailsParams =
+                QueryProductDetailsParams.newBuilder()
+                        .setProductList(
+                                ImmutableList.of(
+                                        QueryProductDetailsParams.Product.newBuilder()
+                                                .setProductId(productID)
+                                                .setProductType(BillingClient.ProductType.INAPP)
+                                                .build()))
+                        .build();
+
+        billingClient.queryProductDetailsAsync(
+                queryProductDetailsParams,
+                (billingResult, productDetailsList) -> {
+                    if (productDetailsList == null) {
+                        Toast.makeText(MainActivity.this, "Account unable to access products. Check if your gmail account is a license tester on Google Play Console", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    // Process the result.
+                    ProductDetails selected = selectNonConsumableProduct(productDetailsList);
+                    launchBillingFlow(selected);
+                }
+        );
     }
 
     /**
@@ -207,61 +160,51 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     /**
      * Update system to current purchases. You can change this function to support other app
      *
-     * @param removeAdsData    System data to record previous remove_ads purchase.
-     * @param subscriptionData System data to record subscription.
+     * @param nonConsumableData System data to record previous remove_ads purchase.
+     * @param consumableData    System data to record subscription.
      */
-    private void updateBillingUI(RemoveAdsData removeAdsData, SubscriptionData subscriptionData) {
-        if (removeAdsData != null) {
+    private void updateBillingUI(NonConsumableData nonConsumableData, ConsumableData consumableData) {
+        if (nonConsumableData != null) {
             //Ads OFF
-            binding.removeAds.setEnabled(false);
-            binding.removeAds.setText(getString(R.string.status_no_ads));
+            binding.nonConsumable.setEnabled(false);
+            binding.nonConsumable.setText(getString(R.string.status_no_ads));
         } else {
             //Ads ON
-            binding.removeAds.setEnabled(true);
-            binding.removeAds.setText(getString(R.string.status_ads));
-        }
-        if (subscriptionData != null) {
-            //Subscription is Active
-            binding.subscribe.setEnabled(false);
-            binding.subscribe.setText(getString(R.string.status_subs_active));
-        } else {
-            //Subscription is Inactive
-            binding.subscribe.setText(getString(R.string.label_subscribe));
-            binding.subscribe.setEnabled(true);
+            binding.nonConsumable.setEnabled(true);
+            binding.nonConsumable.setText(getString(R.string.status_ads));
         }
     }
 
 
     /**
-     * Save SKUs and purchase tokens to your system data.In this case SharedPreference
+     * Save ProductIDs and purchase tokens to your system data.In this case SharedPreference
      */
     private void recordPurchase(String userID, Purchase purchase) {
-        if (purchase.getProducts().get(0).equals(PRODUCT_REMOVE_ADS)) {
-            //Remove Ads
-            RemoveAdsData removeAdsData = new RemoveAdsData();
-            removeAdsData.setPurchaseToken(purchase.getPurchaseToken());
-            removeAdsData.setUserID(purchase.getProducts().get(0));
-            removeAdsData.setProductID(userID);
-            cache.setRemoveAdsData(removeAdsData);
+        if (purchase.getProducts().get(0).equals(PRODUCT_1)) {
+            //Non-consumable (One-time)
+            NonConsumableData nonConsumableData = new NonConsumableData();
+            nonConsumableData.setPurchaseToken(purchase.getPurchaseToken());
+            nonConsumableData.setUserID(purchase.getProducts().get(0));
+            nonConsumableData.setProductID(userID);
+            cache.setNonConsumableData(nonConsumableData);
             restorePurchases();
-            Log.d(TAG, "Ads (Remove): Saved");
+            Log.d(TAG, "NonConsumableData: Saved");
 
-        } else if (purchase.getProducts().get(0).equals(PRODUCT_MONTH)) {
-            //Monthly subscription
-            SubscriptionData subscriptionData = new SubscriptionData();
-            subscriptionData.setSku(purchase.getProducts().get(0));
-            subscriptionData.setUserID(USER_ID);
-            cache.setSubscriptionData(subscriptionData);
+        } else if (purchase.getProducts().get(0).equals(PRODUCT_2)) {
+            //Consumable product
+            ConsumableData consumableData = new ConsumableData();
+            consumableData.setSku(purchase.getProducts().get(0));
+            consumableData.setUserID(USER_ID);
+            cache.setConsumableData(consumableData);
             restorePurchases();
 
-            Log.d(TAG, "Monthly Subscription: Saved");
+            Log.d(TAG, "ConsumableData: Saved");
         }
     }
 
 
     /**
      * Check existing purchases that user has previously made.
-     * This will query playstore app cache without making a network request
      */
     private void queryPurchases() {
         if (billingClient.isReady()) {
@@ -277,17 +220,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
                         }
                     }
             );
-
-
-//            Purchase.PurchasesResult monthPurchaseResult = billingClient.queryPurchases(BillingClient.SkuType.SUBS);
-//            if ((monthPurchaseResult.getPurchasesList() != null) && monthPurchaseResult.getPurchasesList().size() > 0) {
-//                Purchase monthPurchase = monthPurchaseResult.getPurchasesList().get(0);
-//                handlePurchase(monthPurchase);
-//            } else {
-//                //No current subscription
-//                //Update system data accordingly
-//                cache.setSubscriptionData(null);
-//            }
         }
     }
 
@@ -337,27 +269,38 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     }
 
     /**
-     * Launch playstore payment screen to buy remove_ads product id
+     * Launch playstore payment screen to buy using product details you got previously
      *
-     * @param skuDetails
+     * @param productDetails
      */
-    private void launchBillingFlow(SkuDetails skuDetails) {
-        // Retrieve a value for "skuDetails" by calling querySkuDetailsAsync().
-        BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                .setSkuDetails(skuDetails)
-                .build();
-        int responseCode = billingClient.launchBillingFlow(this, billingFlowParams).getResponseCode();
+    private void launchBillingFlow(ProductDetails productDetails) {
+        ImmutableList productDetailsParamsList =
+                ImmutableList.of(
+                        BillingFlowParams.ProductDetailsParams.newBuilder()
+                                // retrieve a value for "productDetails" by calling queryProductDetailsAsync()
+                                .setProductDetails(productDetails)
+                                .build()
+                );
 
+        BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(productDetailsParamsList)
+                .build();
+
+        // Launch the billing flow
+        BillingResult billingResult = billingClient.launchBillingFlow(this, billingFlowParams);
     }
 
     /**
-     * Select remove_ads product to buy.
+     * Select one-time/non-consumable product_details from product_details_list.
      *
-     * @param skuDetailsList
+     * @param productDetailsList
      */
-    private SkuDetails selectRemoveAdsProduct(@NonNull List<SkuDetails> skuDetailsList) {
-        if (skuDetailsList.size() > 0) {
-            return skuDetailsList.get(0);
+    private ProductDetails selectNonConsumableProduct(@NonNull List<ProductDetails> productDetailsList) {
+        //Assuming we have our app database, we can query.
+        for (ProductDetails pd : productDetailsList) {
+            if (pd.getProductId().equals(PRODUCT_1)) {
+                return pd;
+            }
         }
         return null;
     }
