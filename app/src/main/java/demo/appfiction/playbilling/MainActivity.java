@@ -15,6 +15,8 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.ConsumeParams;
+import com.android.billingclient.api.ConsumeResponseListener;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
@@ -28,7 +30,7 @@ import demo.appfiction.playbilling.databinding.ActivityMainBinding;
 
 
 /**
- * Demonstrate one-time purchase to remove Ads and monthly subscription for app
+ * Demonstrate one-time purchase/non-consumable and consumable types of purchases
  * Docs: https://developer.android.com/google/play/billing/integrate
  */
 
@@ -37,19 +39,11 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     private ActivityMainBinding binding;
     private BillingClient billingClient;
 
-    /**
-     * SharedPreference cache
-     */
-    private Cache cache;
-
 
     /**
      * ID of user who is logged into the app/. For demo purpose we make user constant. Change to your login.
      */
     private String USER_ID = "id_of_the_user_123";
-
-    public static final String PLAY_STORE_SUBSCRIPTION_DEEPLINK_URL
-            = "https://play.google.com/store/account/subscriptions?sku=%s&package=%s";
 
     /**
      * ID of one-time in-app product
@@ -64,9 +58,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-
-        //Initialise SharedPreference data storage
-        cache = new Cache(MainActivity.this);
 
         //Connect to Google Play billing at start of activity
         billingClient = BillingClient.newBuilder(this)
@@ -105,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         binding.consumable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                buyProduct(PRODUCT_2);
             }
         });
     }
@@ -124,7 +115,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      * @param productID id of product
      */
     private void buyProduct(String productID) {
-
         QueryProductDetailsParams queryProductDetailsParams =
                 QueryProductDetailsParams.newBuilder()
                         .setProductList(
@@ -143,36 +133,9 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
                         return;
                     }
                     // Process the result.
-                    ProductDetails selected = selectNonConsumableProduct(productDetailsList);
-                    launchBillingFlow(selected);
+                    launchBillingFlow(productDetailsList.get(0));
                 }
         );
-    }
-
-    /**
-     * Restore all active purchased products
-     * Call this function to update app with user's purchases
-     */
-    private void restorePurchases() {
-        updateBillingUI(cache.getRemoveAdsData(), cache.getSubscriptionData());
-    }
-
-    /**
-     * Update system to current purchases. You can change this function to support other app
-     *
-     * @param nonConsumableData System data to record previous remove_ads purchase.
-     * @param consumableData    System data to record subscription.
-     */
-    private void updateBillingUI(NonConsumableData nonConsumableData, ConsumableData consumableData) {
-        if (nonConsumableData != null) {
-            //Ads OFF
-            binding.nonConsumable.setEnabled(false);
-            binding.nonConsumable.setText(getString(R.string.status_no_ads));
-        } else {
-            //Ads ON
-            binding.nonConsumable.setEnabled(true);
-            binding.nonConsumable.setText(getString(R.string.status_ads));
-        }
     }
 
 
@@ -180,26 +143,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      * Save ProductIDs and purchase tokens to your system data.In this case SharedPreference
      */
     private void recordPurchase(String userID, Purchase purchase) {
-        if (purchase.getProducts().get(0).equals(PRODUCT_1)) {
-            //Non-consumable (One-time)
-            NonConsumableData nonConsumableData = new NonConsumableData();
-            nonConsumableData.setPurchaseToken(purchase.getPurchaseToken());
-            nonConsumableData.setUserID(purchase.getProducts().get(0));
-            nonConsumableData.setProductID(userID);
-            cache.setNonConsumableData(nonConsumableData);
-            restorePurchases();
-            Log.d(TAG, "NonConsumableData: Saved");
 
-        } else if (purchase.getProducts().get(0).equals(PRODUCT_2)) {
-            //Consumable product
-            ConsumableData consumableData = new ConsumableData();
-            consumableData.setSku(purchase.getProducts().get(0));
-            consumableData.setUserID(USER_ID);
-            cache.setConsumableData(consumableData);
-            restorePurchases();
-
-            Log.d(TAG, "ConsumableData: Saved");
-        }
     }
 
 
@@ -224,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     }
 
     /**
-     * Handle purchase
+     * Handle purchase to make consumable or non-consumable
      *
      * @param purchase
      */
@@ -233,12 +177,34 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
             //Save transaction on system
             recordPurchase(USER_ID, purchase);
             if (!purchase.isAcknowledged()) {
-                //Acknowledge purchase to prevent refund to buyer
-                AcknowledgePurchaseParams acknowledgePurchaseParams =
-                        AcknowledgePurchaseParams.newBuilder()
-                                .setPurchaseToken(purchase.getPurchaseToken())
-                                .build();
-                billingClient.acknowledgePurchase(acknowledgePurchaseParams, this);
+                //Acknowledge purchase to prevent refund to buyer using acknowledge params or consume params
+                if (purchase.getProducts().get(0).equals(PRODUCT_1)) {
+//                    Non-consumable
+                    //Run acknowledge api so that user will not need to buy again
+
+                    AcknowledgePurchaseParams acknowledgePurchaseParams =
+                            AcknowledgePurchaseParams.newBuilder()
+                                    .setPurchaseToken(purchase.getPurchaseToken())
+                                    .build();
+                    billingClient.acknowledgePurchase(acknowledgePurchaseParams, this);
+
+
+                } else if (purchase.getProducts().get(0).equals(PRODUCT_2)) {
+//                    Consumable
+                    //Run consume api so that user can buy again
+                    ConsumeParams consumeParams =
+                            ConsumeParams.newBuilder()
+                                    .setPurchaseToken(purchase.getPurchaseToken())
+                                    .build();
+                    ConsumeResponseListener listener = (billingResult, purchaseToken) -> {
+                        if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                            // Handle the success of the consume operation.
+                        }
+                    };
+
+                    billingClient.consumeAsync(consumeParams, listener);
+
+                }
             }
         }
     }
@@ -290,18 +256,9 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         BillingResult billingResult = billingClient.launchBillingFlow(this, billingFlowParams);
     }
 
-    /**
-     * Select one-time/non-consumable product_details from product_details_list.
-     *
-     * @param productDetailsList
-     */
-    private ProductDetails selectNonConsumableProduct(@NonNull List<ProductDetails> productDetailsList) {
-        //Assuming we have our app database, we can query.
-        for (ProductDetails pd : productDetailsList) {
-            if (pd.getProductId().equals(PRODUCT_1)) {
-                return pd;
-            }
-        }
-        return null;
+    @Override
+    protected void onDestroy() {
+        billingClient.endConnection();
+        super.onDestroy();
     }
 }

@@ -38,7 +38,7 @@ public class Cache {
      * System data for user's subscription.
      * @return
      */
-    public NonConsumableData getRemoveAdsData() {
+    public NonConsumableData getNonConsumableData() {
         String json = prefs.getString(KEY_REMOVE_ADS_DATA, null);
         return gson.fromJson(json, NonConsumableData.class);
     }

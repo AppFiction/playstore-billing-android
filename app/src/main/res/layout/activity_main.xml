@@ -19,7 +19,6 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/non_consumable"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
@@ -31,21 +30,11 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/consumable"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
                     android:text="@string/label_btn2" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/restorePurchases"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:text="@string/label_restore_purchases" />
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
