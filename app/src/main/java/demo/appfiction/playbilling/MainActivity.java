@@ -144,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      * Save ProductIDs and purchase tokens to your system data.In this case SharedPreference
      */
     private void recordPurchase(String userID, Purchase purchase) {
+        //Your code here
 
     }
 
