@@ -34,7 +34,7 @@ import demo.appfiction.playbilling.databinding.ActivityMainBinding;
  * Docs: https://developer.android.com/google/play/billing/integrate
  */
 
-public class MainActivity extends AppCompatActivity implements PurchasesUpdatedListener, AcknowledgePurchaseResponseListener {
+public class MainActivity extends AppCompatActivity implements PurchasesUpdatedListener {
 
     private ActivityMainBinding binding;
     private BillingClient billingClient;
@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      */
     private String USER_ID = "id_of_the_user_123";
 
-//    IDs of the two products we use in this demo. You can get this from play console
+    //    IDs of the two products we use in this demo. You can get this from play console
     private final String PRODUCT_1 = "prod1";
     private final String PRODUCT_2 = "prod2";
 
@@ -181,18 +181,27 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
             if (!purchase.isAcknowledged()) {
                 //Acknowledge purchase to prevent refund to buyer using acknowledge params or consume params
                 if (purchase.getProducts().get(0).equals(PRODUCT_1)) {
-//                    Non-consumable
+//                    For non-consumable only
                     //Run acknowledge api so that user will not need to buy again
 
                     AcknowledgePurchaseParams acknowledgePurchaseParams =
                             AcknowledgePurchaseParams.newBuilder()
                                     .setPurchaseToken(purchase.getPurchaseToken())
                                     .build();
-                    billingClient.acknowledgePurchase(acknowledgePurchaseParams, this);
+                    billingClient.acknowledgePurchase(acknowledgePurchaseParams, billingResult -> {
+                        if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MainActivity.this, "Successfully Acknowledged", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    });
 
 
                 } else if (purchase.getProducts().get(0).equals(PRODUCT_2)) {
-//                    Consumable
+//                    For Consumable only
                     //Run consume api so that user can buy again
                     ConsumeParams consumeParams =
                             ConsumeParams.newBuilder()
@@ -201,6 +210,13 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
                     ConsumeResponseListener listener = (billingResult, purchaseToken) -> {
                         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                             // Handle the success of the consume operation.
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MainActivity.this, "Successfully Consumed", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+
                         }
                     };
 
@@ -229,11 +245,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         } else {
             // Handle any other error codes.
         }
-    }
-
-    @Override
-    public void onAcknowledgePurchaseResponse(@NonNull BillingResult billingResult) {
-
     }
 
     /**
