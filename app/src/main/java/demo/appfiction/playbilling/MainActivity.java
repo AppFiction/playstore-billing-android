@@ -45,14 +45,9 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      */
     private String USER_ID = "id_of_the_user_123";
 
-    /**
-     * ID of one-time in-app product
-     */
+//    IDs of the two products we use in this demo. You can get this from play console
     private final String PRODUCT_1 = "prod1";
     private final String PRODUCT_2 = "prod2";
-
-
-    private final String TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +101,12 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         super.onResume();
         //Call this here to update app when billing status changes
         queryPurchases();
+    }
+
+    @Override
+    protected void onDestroy() {
+        billingClient.endConnection();
+        super.onDestroy();
     }
 
     /**
@@ -254,11 +255,5 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
         // Launch the billing flow
         BillingResult billingResult = billingClient.launchBillingFlow(this, billingFlowParams);
-    }
-
-    @Override
-    protected void onDestroy() {
-        billingClient.endConnection();
-        super.onDestroy();
     }
 }
