@@ -17,15 +17,14 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.ProductDetails;
+import com.android.billingclient.api.ProductDetailsResponseListener;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.QueryProductDetailsParams;
 import com.android.billingclient.api.QueryPurchasesParams;
-import com.android.billingclient.api.SkuDetails;
-import com.android.billingclient.api.SkuDetailsParams;
-import com.android.billingclient.api.SkuDetailsResponseListener;
+import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import demo.appfiction.playbilling.databinding.ActivityMainBinding;
@@ -155,24 +154,30 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      * @param productID sku of product
      */
     private void buyProduct(String productID) {
-        List<String> skuList = new ArrayList<>();
-        skuList.add(productID);
-        SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
-        params.setSkusList(skuList).setType(productID.equals(PRODUCT_MONTH) ? BillingClient.SkuType.SUBS : BillingClient.SkuType.INAPP);
-        billingClient.querySkuDetailsAsync(params.build(),
-                new SkuDetailsResponseListener() {
-                    @Override
-                    public void onSkuDetailsResponse(BillingResult billingResult,
-                                                     List<SkuDetails> skuDetailsList) {
-                        if (skuDetailsList == null) {
-                            Toast.makeText(MainActivity.this, "Account unable to access products. Check if your gmail account is a license tester on Google Play Console", Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        // Process the result.
-                        SkuDetails selectedSkuDetail = selectRemoveAdsProduct(skuDetailsList);
-                        launchBillingFlow(selectedSkuDetail);
+
+        QueryProductDetailsParams queryProductDetailsParams =
+                QueryProductDetailsParams.newBuilder()
+                        .setProductList(
+                                ImmutableList.of(
+                                        QueryProductDetailsParams.Product.newBuilder()
+                                                .setProductId(productID)
+                                                .setProductType(productID.equals(PRODUCT_MONTH) ?
+                                                        BillingClient.ProductType.SUBS : BillingClient.ProductType.INAPP)
+                                                .build()))
+                        .build();
+
+        billingClient.queryProductDetailsAsync(
+                queryProductDetailsParams,
+                new ProductDetailsResponseListener() {
+                    public void onProductDetailsResponse(BillingResult billingResult,
+                                                         List<ProductDetails> productDetailsList) {
+                        // check billingResult
+                        // process returned productDetailsList
+                        ProductDetails selected = selectRemoveAdsProduct(productDetailsList);
+                        launchBillingFlow(selected);
                     }
-                });
+                }
+        );
     }
 
     /**
@@ -339,14 +344,26 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     /**
      * Launch playstore payment screen to buy remove_ads product id
      *
-     * @param skuDetails
+     * @param productDetails
      */
-    private void launchBillingFlow(SkuDetails skuDetails) {
-        // Retrieve a value for "skuDetails" by calling querySkuDetailsAsync().
+    private void launchBillingFlow(ProductDetails productDetails) {
+        ImmutableList productDetailsParamsList =
+                ImmutableList.of(
+                        BillingFlowParams.ProductDetailsParams.newBuilder()
+                                // retrieve a value for "productDetails" by calling queryProductDetailsAsync()
+                                .setProductDetails(productDetails)
+                                // to get an offer token, call ProductDetails.getSubscriptionOfferDetails()
+                                // for a list of offers that are available to the user
+//                                .setOfferToken(selectedOfferToken)
+                                .build()
+                );
+
         BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                .setSkuDetails(skuDetails)
+                .setProductDetailsParamsList(productDetailsParamsList)
                 .build();
-        int responseCode = billingClient.launchBillingFlow(this, billingFlowParams).getResponseCode();
+
+// Launch the billing flow
+        BillingResult billingResult = billingClient.launchBillingFlow(this, billingFlowParams);
 
     }
 
@@ -355,7 +372,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
      *
      * @param skuDetailsList
      */
-    private SkuDetails selectRemoveAdsProduct(@NonNull List<SkuDetails> skuDetailsList) {
+    private ProductDetails selectRemoveAdsProduct(@NonNull List<ProductDetails> skuDetailsList) {
         if (skuDetailsList.size() > 0) {
             return skuDetailsList.get(0);
         }
