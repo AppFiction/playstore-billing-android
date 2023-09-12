@@ -362,7 +362,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
                 .setProductDetailsParamsList(productDetailsParamsList)
                 .build();
 
-// Launch the billing flow
+        // Launch the billing flow
         BillingResult billingResult = billingClient.launchBillingFlow(this, billingFlowParams);
 
     }
